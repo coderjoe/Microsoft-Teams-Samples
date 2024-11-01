@@ -56,6 +56,7 @@ namespace Microsoft.BotBuilderSamples
                     await userTokenClient.SignOutUserAsync(innerDc.Context.Activity.From.Id, ConnectionName, innerDc.Context.Activity.ChannelId, cancellationToken).ConfigureAwait(false);
 
                     await innerDc.Context.SendActivityAsync(MessageFactory.Text("You have been signed out."), cancellationToken);
+                    await innerDc.Context.SendActivityAsync(MessageFactory.Text("Now send any additional message. If you have configured the bot to use BlobStorage you should see an exception being thrown."), cancellationToken);
                     return await innerDc.CancelAllDialogsAsync(cancellationToken);
                 }
             }

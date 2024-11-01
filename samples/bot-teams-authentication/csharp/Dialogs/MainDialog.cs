@@ -63,6 +63,7 @@ namespace Microsoft.BotBuilderSamples
                 var title = !string.IsNullOrEmpty(me.JobTitle) ?
                             me.JobTitle : "Unknown";
 
+                await stepContext.Context.SendActivityAsync($"Welcome to the TeamsAuth BlobStorage logout bug reproduction bot.");
                 await stepContext.Context.SendActivityAsync($"You're logged in as {me.DisplayName} ({me.UserPrincipalName}); you job title is: {title}");
 
                 return await stepContext.PromptAsync(nameof(ConfirmPrompt), new PromptOptions { Prompt = MessageFactory.Text("Would you like to view your token?") }, cancellationToken);
@@ -75,6 +76,7 @@ namespace Microsoft.BotBuilderSamples
         private async Task<DialogTurnResult> DisplayTokenPhase1Async(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
             await stepContext.Context.SendActivityAsync(MessageFactory.Text("Thank you."), cancellationToken);
+            await stepContext.Context.SendActivityAsync(MessageFactory.Text("Send \"logout\" now to trigger a logout."), cancellationToken);
 
             var result = (bool)stepContext.Result;
             if (result)
