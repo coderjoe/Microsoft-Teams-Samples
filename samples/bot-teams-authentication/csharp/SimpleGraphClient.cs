@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Azure.Identity;
 using Microsoft.Graph;
+using Microsoft.Graph.Models;
 
 namespace Microsoft.BotBuilderSamples
 {
@@ -69,22 +71,26 @@ namespace Microsoft.BotBuilderSamples
             };
 
             // Send the message.
-            await graphClient.Me.SendMail(email, true).Request().PostAsync();
+            await graphClient.Me.SendMail.PostAsync(new Graph.Me.SendMail.SendMailPostRequestBody
+            {
+                Message = email,
+                SaveToSentItems = true
+            });
         }
 
         // Gets mail for the user using the Microsoft Graph API
         public async Task<Message[]> GetRecentMailAsync()
         {
             var graphClient = GetAuthenticatedClient();
-            var messages = await graphClient.Me.MailFolders.Inbox.Messages.Request().GetAsync();
-            return messages.Take(5).ToArray();
+            var messages = await graphClient.Me.MailFolders["Inbox"].Messages.GetAsync();
+            return messages.Value.Take(5).ToArray();
         }
 
         // Get information about the user.
         public async Task<User> GetMeAsync()
         {
             var graphClient = GetAuthenticatedClient();
-            var me = await graphClient.Me.Request().GetAsync();
+            var me = await graphClient.Me.GetAsync();
             return me;
         }
 
@@ -92,59 +98,15 @@ namespace Microsoft.BotBuilderSamples
         public async Task<User> GetManagerAsync()
         {
             var graphClient = GetAuthenticatedClient();
-            var manager = await graphClient.Me.Manager.Request().GetAsync() as User;
+            var manager = await graphClient.Me.Manager.GetAsync() as User;
             return manager;
         }
-
-        // // Gets the user's photo
-        // public async Task<PhotoResponse> GetPhotoAsync()
-        // {
-        //     HttpClient client = new HttpClient();
-        //     client.DefaultRequestHeaders.Add("Authorization", "Bearer " + _token);
-        //     client.DefaultRequestHeaders.Add("Accept", "application/json");
-
-        //     using (var response = await client.GetAsync("https://graph.microsoft.com/v1.0/me/photo/$value"))
-        //     {
-        //         if (!response.IsSuccessStatusCode)
-        //         {
-        //             throw new HttpRequestException($"Graph returned an invalid success code: {response.StatusCode}");
-        //         }
-
-        //         var stream = await response.Content.ReadAsStreamAsync();
-        //         var bytes = new byte[stream.Length];
-        //         stream.Read(bytes, 0, (int)stream.Length);
-
-        //         var photoResponse = new PhotoResponse
-        //         {
-        //             Bytes = bytes,
-        //             ContentType = response.Content.Headers.ContentType?.ToString(),
-        //         };
-
-        //         if (photoResponse != null)
-        //         {
-        //             photoResponse.Base64String = $"data:{photoResponse.ContentType};base64," +
-        //                                          Convert.ToBase64String(photoResponse.Bytes);
-        //         }
-
-        //         return photoResponse;
-        //     }
-        // }
 
         // Get an Authenticated Microsoft Graph client using the token issued to the user.
         private GraphServiceClient GetAuthenticatedClient()
         {
-            var graphClient = new GraphServiceClient(
-                new DelegateAuthenticationProvider(
-                    requestMessage =>
-                    {
-                        // Append the access token to the request.
-                        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("bearer", _token);
-
-                        // Get event times in the current time zone.
-                        requestMessage.Headers.Add("Prefer", "outlook.timezone=\"" + TimeZoneInfo.Local.Id + "\"");
-
-                        return Task.CompletedTask;
-                    }));
+            var credential = new DefaultAzureCredential();
+            var graphClient = new GraphServiceClient(credential);
             return graphClient;
         }
     }
